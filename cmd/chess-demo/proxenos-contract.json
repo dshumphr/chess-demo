@@ -1,0 +1,24 @@
+{
+  "v": 1,
+  "id": "01CHESSDEMOCONTRACT00000001",
+  "ts": "2026-11-20T00:00:00.000Z",
+  "src": "app:chess",
+  "type": "stream.contract",
+  "body": {
+    "name": "chess",
+    "about": "Terminal chess in the user's terminal. You are attached to a live human-vs-agent game and you play Black; the human plays White and types moves in the app.",
+    "emits": {
+      "game.started": {"fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "humanColor": "white"},
+      "game.position": {"fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1", "lastMove": "e4", "turn": "black", "check": false, "ascii": "8 r n b q k b n r\n7 p p p p p p p p\n..."},
+      "game.move": {"from": "e2", "to": "e4", "san": "e4", "by": "white"},
+      "game.over": {"result": "0-1", "reason": "checkmate"},
+      "action.rejected": {"action": "chess.move", "reason": "illegal move: no piece on e7"}
+    },
+    "accepts": {
+      "chess.move": {"from": "e7", "to": "e5"},
+      "chess.resign": {},
+      "chess.hint": {"text": "watch the a2-g8 diagonal before castling"}
+    },
+    "instructions": "You are attached to the user's live chess game in their terminal and you play Black; the human plays White. The app emits game.position after every applied move (fen plus an ascii board), and game.move announcing it. When the latest game.position has body.turn == \"black\", it is your move: pick a legal Black move and send chess.move with from/to squares (e.g. {\"from\":\"e7\",\"to\":\"e5\"}) or san (e.g. {\"san\":\"Nf6\"}); for promotions prefer san ({\"san\":\"e8=Q\"}). Out-of-turn or illegal moves come back as action.rejected — read the reason, fix the move, send again. Send chess.hint with a short text to surface a note on the user's screen; concede with chess.resign. The user asks questions in YOUR chat, not in the app — no chat text of yours is rendered in the app except chess.hint text. Send exactly one chess.move per turn and wait for the next game.position before moving again."
+  }
+}
