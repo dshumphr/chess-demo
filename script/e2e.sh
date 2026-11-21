@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # End-to-end test: human-vs-agent chess over a proxenos stream, no LLM.
 #
-# - builds the proxenos binary from $PROXENOS_SRC (default /tmp/proxenos)
+# - locates the proxenos binary ($PROXENOS env override, then PATH, then
+#   ~/.local/bin/proxenos, then ../proxenos/proxenos — see
+#   https://github.com/dshumphr/proxenos to clone and build it)
 # - builds chess-demo
 # - runs the app with a scripted White (f3, g4 — heading into fool's mate)
 # - runs a "fake agent" shell loop that reads the stream and replies with
@@ -13,7 +15,20 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-PROXENOS_SRC=${PROXENOS_SRC:-/tmp/proxenos}
+PROX=${PROXENOS:-proxenos}
+if ! command -v "$PROX" >/dev/null 2>&1; then
+  for cand in "$HOME/.local/bin/proxenos" "$ROOT/../proxenos/proxenos"; do
+    if [ -x "$cand" ]; then PROX="$cand"; break; fi
+  done
+fi
+if ! command -v "$PROX" >/dev/null 2>&1 && [ ! -x "$PROX" ]; then
+  echo "e2e: no proxenos binary found." >&2
+  echo "e2e: set PROXENOS=/path/to/proxenos, or clone https://github.com/dshumphr/proxenos" >&2
+  echo "e2e: and build it (go build -o ~/.local/bin/proxenos .) so it is on PATH." >&2
+  exit 1
+fi
+case "$PROX" in */*) PROX=$(readlink -f "$PROX") ;; esac
+echo "e2e: proxenos binary: $PROX"
 WORK=$(mktemp -d)
 APP_PID=""
 cleanup() {
@@ -28,9 +43,7 @@ export XDG_DATA_HOME="$WORK/data" # isolate the proxenos streams dir
 
 echo "== building =="
 mkdir -p "$WORK/bin"
-( cd "$PROXENOS_SRC" && go build -o "$WORK/bin/proxenos" . )
 ( cd "$ROOT" && go build -o "$WORK/bin/chess-demo" ./cmd/chess-demo )
-PROX="$WORK/bin/proxenos"
 STREAM="chess-e2e-$$"
 
 echo "== scripted white moves =="

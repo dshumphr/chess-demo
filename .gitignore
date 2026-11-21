@@ -1,0 +1,4 @@
+# built binary (go build -o chess-demo ./cmd/chess-demo)
+/chess-demo
+# integration error sink the app writes next to the binary
+chess-demo-proxenos.log
